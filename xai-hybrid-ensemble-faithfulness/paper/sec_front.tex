@@ -1,0 +1,45 @@
+\section{Introduction}
+Machine-learning models built on routinely collected clinical variables are increasingly proposed for diagnosis and risk stratification \cite{topol}. Ensembles are a frequent choice because combining learners often improves discrimination; a review of disease-prediction studies found stacking to be the most accurate ensemble family in most comparisons where it was used \cite{mahajan}. Because clinical use requires explanations, post-hoc attribution methods such as SHapley Additive exPlanations (SHAP) and LIME are routinely attached to published healthcare ensembles \cite{lundberg2017}.
+
+Attaching an explanation does not show that it is correct. An explanation is \emph{faithful} when the features it ranks highest are the ones that actually drive the model's output. Many explanation methods are still evaluated anecdotally \cite{nauta}, and explainers often disagree on the same prediction \cite{krishna}. A practitioner choosing between an ensemble and a single model therefore has evidence on accuracy, but not on whether the ensemble is explained as faithfully as the simpler alternative.
+
+We study this question for one widely used design, a hybrid stacked-voting ensemble, with analyses specified in dated protocols before they were run and with code and per-fold results that regenerate every number. Our contributions are:
+\begin{itemize}
+\item A leakage-safe comparison on eight public healthcare datasets between the hybrid ensemble and the single model that internal validation would select: no gain in discrimination, and SHAP explanations that were less faithful under marginal feature removal on seven of eight datasets (significantly on three), with a pooled deficit whose significance depends on the meta-analysis method.
+\item Robustness and component analyses: the deficit persists on held-out repetitions, with a second SHAP estimator and with tuned models; it is not a ``linear versus tree'' effect, since XGBoost is explained as faithfully as logistic regression while the ensemble is not.
+\item A simulation linking the marginal-removal deficit to correlated features, and a pre-specified held-out test, with a random-grouping placebo, of attribution to clusters of correlated features as a remedy, which helped only where large correlated blocks exist.
+\end{itemize}
+
+\section{Related Work}
+\subsection{Explained ensembles in healthcare}
+Recent conference and journal studies typically pair a stacking or voting ensemble with SHAP or LIME and judge the explanations by clinical plausibility. Divya et al.\ stacked gradient boosting, random forest and logistic regression on the Cleveland data and used SHAP to identify influential features \cite{divya}; Abo-zanona et al.\ combined PCA- and SHAP-guided feature reduction with a tuned stacking ensemble for breast cancer \cite{abozanona}; Ganie et al.\ compared stacking and voting with their base learners on two heart-disease datasets \cite{ganie}. Other studies explain only part of the ensemble or measure a different property: Wolak et al.\ applied SHAP to a CatBoost model rather than to their voting and stacking ensembles \cite{wolak}, Adekoya et al.\ measured the fold-to-fold stability of SHAP rankings computed on one component \cite{adekoya}, Sahin et al.\ reported weak SHAP--LIME agreement for a stacking ensemble \cite{sahin}, and Zarepour-Ahmadabadi et al.\ reported higher local-surrogate fidelity than LIME for a voting ensemble \cite{zarepour}. Neither surrogate fidelity nor explainer agreement shows that the attributed features drive the output \cite{krishna}.
+
+\subsection{Faithfulness metrics and feature removal}
+Deletion and insertion curves remove features in order of attributed importance and track the output \cite{petsiuk}; ROAR retrains after removal \cite{hooker}; faithfulness correlation relates attribution mass to the output change for random subsets \cite{bhatt}; ROAD reduces the information leakage and distribution shift that removal introduces \cite{rong}. On clinical tabular data, faithfulness has been evaluated for single models \cite{qureshi,ababneh}; Every removal-based explanation or metric must choose what a removed feature becomes \cite{covert}. Interventional (marginal) replacement is ``true to the model'' but evaluates it on combinations that do not occur in data; conditional replacement is ``true to the data'' but changes what an attribution means \cite{chen,janzing,frye,aas}. Different choices yield different Shapley values \cite{sundararajan,kumar}, and permutation forces models to extrapolate \cite{hooker_mentch}. Group Shapley values were proposed for dependent features \cite{jullum_group}.
+
+Our normalized deletion faithfulness (NDF) is a deletion-curve score that is normalized by the patient's prediction gap and centered on random deletion orders, so that values are comparable across models with different output ranges. ROAD's key idea, imputing removed values in a way that stays close to the data distribution, carries over to tabular data; our conditional $k$-nearest-neighbor operator plays this on-manifold role, and we report it next to the marginal operator because our question is precisely how the removal operator affects the comparison.
+
+\subsection{Positioning}
+Table~\ref{tab:rw} contrasts representative studies with ours. We are not aware of a study that compares, on the same patients, the faithfulness of explanations of a fitted heterogeneous ensemble with those of the single model a practitioner would otherwise deploy.
+
+\begin{table}[t]
+\caption{Representative studies of explained ensembles and explanation faithfulness on clinical tabular data}
+\label{tab:rw}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Study & Datasets & \makecell{Explains fitted\\ ensemble} & \makecell{Faithfulness\\ measured} & \makecell{Vs.\ selected\\ single model} \\
+\midrule
+Divya et al.\ \cite{divya} & 1 & Yes & No & No \\
+Abo-zanona et al.\ \cite{abozanona} & 1 & Yes & No & No \\
+Wolak et al.\ \cite{wolak} & 1 & No (component) & No & No \\
+Adekoya et al.\ \cite{adekoya} & 2 & No (component) & No (stability) & No \\
+Sahin et al.\ \cite{sahin} & 1 & Yes & No (agreement) & No \\
+Zarepour-A.\ et al.\ \cite{zarepour} & 1 & Yes & Surrogate fidelity & No \\
+Qureshi et al.\ \cite{qureshi} & 4 & No (single RF) & Yes & No \\
+\midrule
+This study & 8 & Yes & \makecell{Yes (NDF;\\ FC secondary)} & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,70 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{url}
+\def\UrlBreaks{\do\/\do-\do.\do:}
+\input{numbers.tex}
+
+\begin{document}
+\title{Are Hybrid Ensembles Explained as Faithfully as the Single Model They Replace? Evidence from Eight Healthcare Datasets}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} Riya Kamboj}
+\IEEEauthorblockA{\textit{Department of CSE}\\
+\textit{Chandigarh University}\\
+Mohali, Punjab-140413, India\\
+kzriya004@gmail.com}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Kushalpreet Kaur}
+\IEEEauthorblockA{\textit{Department of CSE}\\
+\textit{Chandigarh University}\\
+Mohali, Punjab-140413, India\\
+kushalpreetkaur7@gmail.com}
+\and
+\IEEEauthorblockN{3\textsuperscript{rd} Ajatray Swagat Bhuyan}
+\IEEEauthorblockA{\textit{Department of CSE}\\
+\textit{Chandigarh University}\\
+Mohali, Punjab-140413, India\\
+swagatbhuyan16@gmail.com}}
+
+\maketitle
+
+\input{sec_abstract.tex}
+
+\begin{IEEEkeywords}
+explainable AI, ensemble learning, stacking, SHAP, faithfulness, clinical prediction
+\end{IEEEkeywords}
+
+\input{sec_front.tex}
+\input{sec_methods.tex}
+
+\begin{table}[t]
+\caption{Datasets (UCI repository identifier in parentheses \cite{uci_repo})}
+\label{tab:data}
+\centering\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\resizebox{\columnwidth}{!}{\begin{tabular}{@{}llrrrrl@{}}
+\toprule
+Dataset & Task & $n$ & $d$ & Pos.\,\% & $|\rho|_{\max}$ & S* (folds of 25) \\
+\midrule
+\input{tab_data.tex}
+\bottomrule
+\end{tabular}}\\[2pt]
+{\scriptsize $|\rho|_{\max}$: largest Spearman correlation between two features. $^a$32 subjects; folds grouped by subject. $^b$UCI ID 891; stratified sample of 253{,}680 BRFSS 2015 respondents.}
+\end{table}
+
+\input{sec_results.tex}
+\input{sec_discussion.tex}
+
+\section*{Supplementary material and code}
+Supplement S1--S10, protocols, code and per-fold outputs: [repository link].
+
+\begin{thebibliography}{99}
+\input{refs.tex}
+\end{thebibliography}
+\end{document}

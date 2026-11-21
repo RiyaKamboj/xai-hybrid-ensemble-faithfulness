@@ -1,0 +1,82 @@
+# Study configuration. Every value here is taken from the Stage 2.6 design
+# report (26 Oct 2026) unless marked "IMPLEMENTATION CHOICE" or "AMBIGUITY".
+# Changing anything below after the protocol freeze requires a logged amendment.
+
+master_seed: 20261026          # IMPLEMENTATION CHOICE (any fixed integer; recorded in run manifests)
+
+datasets:
+  wdbc:
+    uci_id: 17
+    zip_name: "breast+cancer+wisconsin+diagnostic.zip"
+    member: "wdbc.data"
+    # SHA-256 fingerprints taken in the browser from the official UCI files on 26 Oct 2026
+    zip_sha256: "bc154869ef13f753f9e2b5a17e248cfe1ba4b6721db7c4da9f4880e40b05d3af"
+    member_sha256: "d606af411f3e5be8a317a5a8b652b425aaf0ff38ca683d5327ffff94c3695f4a"
+    expected:                   # Stage 2.6 section 9 (data-checked)
+      rows: 569
+      features: 30
+      positives: 212            # M
+      negatives: 357            # B
+      missing_cells: 0
+      exact_duplicate_rows: 0
+  dr_debrecen:
+    uci_id: 329
+    zip_name: "diabetic+retinopathy+debrecen.zip"
+    member: "messidor_features.arff"
+    zip_sha256: "64ee2dbaffc69dab77cc0fb7458fa93cb21a20f15938cafacdc195a5e2226b2c"
+    member_sha256: "b83485dd519127ac1ba06a95da5f1d12d4bde2a362eb32d7d353bdcabfa08a93"
+    expected:
+      rows: 1151
+      features: 19
+      positives: 611
+      negatives: 540
+      missing_cells: 0
+      exact_duplicate_rows: 5
+  cleveland:
+    uci_id: 45
+    zip_name: "heart+disease.zip"
+    member: "processed.cleveland.data"
+    zip_sha256: "b17cd273da9ce1caa4710fce80227ea454d4dbf9fcbc8e6a9121672751563adc"
+    member_sha256: "a74b7efa387bc9d108d7d0115d831fe9b414b29ae7124f331b622b4efa0427c8"
+    expected:
+      rows: 303
+      features: 13
+      positives: 139            # num >= 1
+      negatives: 164
+      missing_cells: 6          # ca 4, thal 2
+      exact_duplicate_rows: 0
+
+cv:
+  outer_splits: 5
+  outer_repeats: 5
+  inner_splits: 5
+
+models:                         # Stage 2.6 section 8 (fixed settings, no tuning)
+  lr:  {C: 1.0, max_iter: 5000}
+  svm: {C: 1.0, gamma: "scale"}
+  knn: {n_neighbors: 15}
+  rf:  {n_estimators: 500}
+  xgb: {}                       # library defaults
+  e3_groups:
+    A: [lr, svm, knn]
+    B: [rf, xgb]
+  s_star_tie_tolerance: 0.001
+  s_star_tie_order: [lr, rf, xgb, svm, knn]
+
+explanation:                    # Stage 2.6 section 10
+  n_patients: 150
+  shap_background: 50
+  shap_max_evals: 500           # PROVISIONAL: fixed after pilot P3
+  ndf_background: 50            # disjoint from SHAP background
+  ndf_K: 5
+  ndf_random_orderings: 20
+  ndf_min_gap: 0.05
+  knn_operator_neighbours: 20   # sensitivity operator
+  robustness_neighbours: 5
+  robustness_sigma_frac: 0.05
+  robustness_sigma_sensitivity: [0.02, 0.10]
+  lime_samples: 5000
+
+thresholds_of_interest:         # interpretation only, not testing
+  delta_auc: 0.02
+  delta_ndf: 0.05
