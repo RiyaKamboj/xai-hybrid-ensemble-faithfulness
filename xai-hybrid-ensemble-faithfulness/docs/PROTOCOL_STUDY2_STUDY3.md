@@ -264,3 +264,21 @@ All revision analyses are secondary or exploratory. The confirmatory set is unch
 **(d) Fold bookkeeping.** Tuned S* was non-linear in 21 of 40 folds. One of these, Parkinsons fold 2 (RF), had no patient with G ≥ 0.05 for both models, so 20 folds enter the subgroup analysis.
 
 **Script.** scripts/16_revision2_stats.py, with output in results/revision/summary_revision2.json.
+
+---
+## Supervisor review (24 Nov 2026; post hoc re-analysis of saved outputs, no refitting)
+**Script.** scripts/17_supervisor_revision.py, with output in results/revision/summary_supervisor.json.
+
+**(a) Formal AUC equivalence test.** The margin of ±0.02 was fixed in PROTOCOL_FREEZE.md. Equivalence is tested with TOST: the 90% CI must lie within ±0.02, using the corrected repeated-CV variance. This is done per dataset and for the pooled estimate (DerSimonian–Laird and HKSJ).
+
+**(b) Exclusion-free faithfulness.** ADF = NDF × G, the prediction drop beyond random deletion, in probability units. It needs no G threshold and is defined whenever G > 0.
+
+**(c) Per-dataset exclusion table and dataset audit table.** These are now in the paper.
+
+**Moved to the supplement.** The remedy table and the robustness table moved to the supplement (S11, S13) to keep the paper at 6 pages.
+
+**Results.**
+- **AUC equivalence:** shown for WDBC, Cleveland, Mammographic, CTG, CDC and pooled; not shown for DR Debrecen, ILPD and Parkinsons.
+- **ADF, marginal operator:** pooled −0.033 (DL p = 0.004; HKSJ CI [−0.069, 0.002]).
+  - 6 datasets significantly negative.
+  - CTG significantly positive (+0.038).

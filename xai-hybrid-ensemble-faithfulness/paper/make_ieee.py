@@ -8,6 +8,7 @@ S4 = json.load(open(R / "study4/summary_study4.json"))
 S67 = json.load(open(R / "study6_7/summary_study6_7.json")); S6, S7 = S67["study6"], S67["study7"]
 V = json.load(open(R / "revision/summary_revision.json")); C = V.get("components")
 V2 = json.load(open(R / "revision/summary_revision2.json"))
+SV = json.load(open(R / "revision/summary_supervisor.json"))
 DS = ["wdbc", "dr_debrecen", "cleveland", "ilpd", "parkinsons", "mammographic", "ctg", "cdc_diabetes"]
 LAB = {"wdbc": "WDBC", "dr_debrecen": "DR Debrecen", "cleveland": "Cleveland", "ilpd": "ILPD", "parkinsons": "Parkinsons",
        "mammographic": "Mammographic", "ctg": "CTG", "cdc_diabetes": "CDC Diabetes"}
@@ -15,6 +16,8 @@ INFO = {"wdbc": ("Breast mass (17)", "569", "30", "37", "1.00"), "dr_debrecen": 
         "cleveland": ("Coronary disease (45)", "303", "13", "46", "0.59"), "ilpd": ("Liver disease (225)", "570", "10", "71", "0.96"),
         "parkinsons": ("Parkinson's, voice (174)", "195$^a$", "22", "75", "1.00"), "mammographic": ("Mammographic mass (161)", "961", "4", "46", "0.72"),
         "ctg": ("Fetal state (193)", "2114", "21", "22", "0.96"), "cdc_diabetes": ("Diabetes, survey$^b$", "5000", "21", "14", "0.45")}
+c4h = lambda lo, hi: f"[{lo:.3f}, {hi:.3f}]".replace("-", "$-$")
+c3 = lambda lo, hi: f"[{lo:.3f}, {hi:.3f}]".replace("-", "$-$")
 mn = lambda x, n=3: f"{x:+.{n}f}".replace("-", "$-$")
 c2 = lambda lo, hi: f"[{lo:.2f}, {hi:.2f}]".replace("-", "$-$")
 fp = lambda p: "$<$0.001" if p < 0.001 else f"{p:.3f}"
@@ -30,12 +33,21 @@ def primary(d):
     return v["H1"], v["H2"], v["H2"].get("p_holm", v["H2"]["p"]), v["H2"]["p"]
 
 
-# Table: datasets
+# Table: datasets and audit (full width)
+AUD = {  # positive class, n (after processing), d, pos %, duplicates, missing, repeated subjects, |rho|max
+ "wdbc": ("WDBC (17)", "Malignant", "569", "30", "37", "0", "0", "No", "1.00"),
+ "dr_debrecen": ("DR Debrecen (329)", "Signs of retinopathy", "1146", "19", "53", "5 removed", "0", "No", "1.00"),
+ "cleveland": ("Cleveland (45)", "Angiographic disease (num$>$0)", "303", "13", "46", "0", "6 cells / 6 rows", "No", "0.59"),
+ "ilpd": ("ILPD (225)", "Liver patient", "570", "10", "71", "13 removed", "4 cells / 4 rows", "No", "0.96"),
+ "parkinsons": ("Parkinsons (174)", "Parkinson's disease", "195", "22", "75", "0", "0", "32 subjects$^a$", "1.00"),
+ "mammographic": ("Mammographic (161)", "Malignant (BI-RADS excluded)", "961", "4", "46", "353 kept$^b$", "160 cells / 130 rows", "No", "0.72"),
+ "ctg": ("Cardiotocography (193)", "Suspect or pathologic (NSP 2--3)", "2114", "21", "22", "12 removed", "0", "No", "0.96"),
+ "cdc_diabetes": ("CDC Diabetes (891)$^c$", "Prediabetes or diabetes", "5000", "21", "14", "42 kept$^b$", "0", "No", "0.45")}
+EX = SV["exclusions"]
 rows = []
 for d in DS:
-    t, n, f, pos, rho = INFO[d]; sc = allds[d]["s_star_counts"]
-    top = ", ".join(f"{k.upper()} {v}" for k, v in sorted(sc.items(), key=lambda kv: -kv[1])[:2])
-    rows.append(f"{LAB[d]} & {t} & {n} & {f} & {pos} & {rho} & {top} \\\\")
+    a = AUD[d]; e = EX[d]
+    rows.append(" & ".join(a) + f" & {e['included']} ({e['pct_included']:.0f}\\%) \\\\")
 Path("tab_data.tex").write_text("\n".join(rows))
 
 # Table: main results
@@ -44,7 +56,8 @@ for d in DS:
     r1, r2, ph, praw = primary(d); s6 = S6["per_dataset"][d]["d_feat"]; tu = S7["tuned"][d]["H2"]; kb = S4["per_dataset"][d]["b_ndf"]
     rk = allds[d]["H2_knn"]
     pcell = f"{fp(ph)}" + ("" if d != "cdc_diabetes" else "$^\\dagger$")
-    rows.append(f"{LAB[d]} & {mn(r1['mean_diff'])} & {mn(r2['mean_diff'])}{star(r2)} {c2(r2['ci_low'], r2['ci_high'])} & {pcell} & {mn(rk['mean_diff'])}{star(rk)} & {mn(s6['mean_diff'])}{star(s6)} & {mn(kb['mean_diff'])}{star(kb)} & {mn(tu['mean_diff'])}{star(tu)} \\\\")
+    eqm = "$^{e}$" if SV["auc_tost"][d]["equivalent"] else ""
+    rows.append(f"{LAB[d]} & {mn(r1['mean_diff'])}{eqm} & {mn(r2['mean_diff'])}{star(r2)} {c2(r2['ci_low'], r2['ci_high'])} & {pcell} & {mn(rk['mean_diff'])}{star(rk)} & {mn(s6['mean_diff'])}{star(s6)} & {mn(kb['mean_diff'])}{star(kb)} & {mn(tu['mean_diff'])}{star(tu)} \\\\")
 M = V["meta"]; p6 = S6["pooled"]["d_feat"]; pb = S4["pooled"]["b_ndf"]; pt = S7["pooled"]["tuned_H2"]
 rows.append("\\midrule")
 rows.append(f"Pooled (DL) & {mn(M['H1']['pooled'], 4)} & {mn(M['H2']['pooled'])} {c2(M['H2']['ci_low'], M['H2']['ci_high'])} & & {mn(M['H2_knn']['pooled'])} & {mn(p6['pooled'])} & {mn(pb['pooled'])} & {mn(pt['pooled'])} \\\\")
@@ -148,5 +161,18 @@ for m, k in [("e3", "HE"), ("s_star", "S"), ("lr", "LR")]:
         put(q.replace("1", "one") + k, f"{100*DSH[m][q]:.0f}")
 put("overLR", f"{100*DSH['lr']['over100_topK']:.0f}"); put("overHE", f"{100*DSH['e3']['over100_topK']:.0f}")
 put("FCDR", mn(S4["per_dataset"]["dr_debrecen"]["a_bhatt"]["mean_diff"])); put("FCDRp", fq(S4["per_dataset"]["dr_debrecen"]["a_bhatt"]["p"]))
+T2 = SV["auc_tost"]; TP = SV["auc_tost_pooled"]
+put("eqn", str(len(SV["auc_equivalent_datasets"])))
+put("eqlist", ", ".join({"wdbc": "WDBC", "dr_debrecen": "DR Debrecen", "cleveland": "Cleveland", "ilpd": "ILPD", "parkinsons": "Parkinsons", "mammographic": "Mammographic", "ctg": "CTG", "cdc_diabetes": "CDC"}[d] for d in SV["auc_equivalent_datasets"]))
+put("aucnine", c4h(*TP["hksj_ci90"])); put("auctostp", fq(TP["hksj_p_tost"]))
+for d, k in [("dr_debrecen", "DR"), ("ilpd", "ILPD"), ("parkinsons", "PARK")]:
+    put("tost" + k, c4h(*T2[d]["ci90"]))
+A = SV["adf_all_patients"]
+put("adf", f"{A['marg']['pooled']['pooled']:+.3f}".replace("-", "$-$")); put("adfp", fq(A["marg"]["pooled"]["p"])); put("adfhk", c3(*A["marg"]["hksj_ci"]))
+put("adfk", f"{A['knn']['pooled']['pooled']:+.3f}".replace("-", "$-$")); put("adfkhk", c3(*A["knn"]["hksj_ci"]))
+put("adfn", f"{A['n_defined']:,}".replace(",", "{,}")); put("adfneg", str(sum(1 for d in DS if A["marg"]["per_dataset"][d]["mean_diff"] < 0 and A["marg"]["per_dataset"][d]["p"] < 0.05)))
+put("adfCTG", f"{A['marg']['per_dataset']['ctg']['mean_diff']:+.3f}".replace("-", "$-$"))
+put("adfmedhe", f"{A['median_adf_e3']:.2f}"); put("adfmeds", f"{A['median_adf_s']:.2f}")
+put("inclmin", f"{min(e['pct_included'] for e in EX.values()):.0f}"); put("inclmax", f"{max(e['pct_included'] for e in EX.values()):.0f}")
 Path("numbers.tex").write_text("\n".join(f"\\newcommand{{\\N{k}}}{{{v}}}" for k, v in Mx.items()))
 print(len(Mx), "macros")

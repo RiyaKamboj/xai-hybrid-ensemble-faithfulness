@@ -10,6 +10,7 @@
 \usepackage{url}
 \def\UrlBreaks{\do\/\do-\do.\do:}
 \input{numbers.tex}
+\emergencystretch=1em
 
 \begin{document}
 \title{Are Hybrid Ensembles Explained as Faithfully as the Single Model They Replace? Evidence from Eight Healthcare Datasets}
@@ -43,26 +44,24 @@ explainable AI, ensemble learning, stacking, SHAP, faithfulness, clinical predic
 \input{sec_front.tex}
 \input{sec_methods.tex}
 
-\begin{table}[t]
-\caption{Datasets (UCI repository identifier in parentheses \cite{uci_repo})}
+\begin{table*}[t]
+\caption{Datasets and audit (UCI repository identifier in parentheses \cite{uci_repo}). Included: sampled explanation patients (500 per dataset) with prediction gap $G\ge0.05$ for both models}
 \label{tab:data}
-\centering\scriptsize
-\setlength{\tabcolsep}{2.2pt}
-\resizebox{\columnwidth}{!}{\begin{tabular}{@{}llrrrrl@{}}
+\centering\footnotesize
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{@{}llrrrlllrr@{}}
 \toprule
-Dataset & Task & $n$ & $d$ & Pos.\,\% & $|\rho|_{\max}$ & S* (folds of 25) \\
+Dataset & Positive class & $n$ & $d$ & Pos.\,\% & Duplicates & Missing & Repeated subjects & $|\rho|_{\max}$ & Included \\
 \midrule
 \input{tab_data.tex}
 \bottomrule
-\end{tabular}}\\[2pt]
-{\scriptsize $|\rho|_{\max}$: largest Spearman correlation between two features. $^a$32 subjects; folds grouped by subject. $^b$UCI ID 891; stratified sample of 253{,}680 BRFSS 2015 respondents.}
-\end{table}
+\end{tabular}\\[2pt]
+{\scriptsize $^a$195 recordings of 32 people; outer and inner folds grouped by subject. $^b$Identical records kept: with coarse features they are plausibly different patients. $^c$Stratified sample of 253{,}680 BRFSS 2015 respondents. Missing values were imputed inside each training pipeline; explanation patients and backgrounds were complete cases. $|\rho|_{\max}$: largest Spearman correlation between two features.}
+\end{table*}
 
 \input{sec_results.tex}
 \input{sec_discussion.tex}
 
-\section*{Supplementary material and code}
-Supplement S1--S10, protocols, code and per-fold outputs: [repository link].
 
 \begin{thebibliography}{99}
 \input{refs.tex}

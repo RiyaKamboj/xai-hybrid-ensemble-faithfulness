@@ -6,12 +6,14 @@ E = json.load(open(R / "study2_3/summary_study2_3.json")); S4 = json.load(open(R
 S67 = json.load(open(R / "study6_7/summary_study6_7.json")); S6, S7 = S67["study6"], S67["study7"]
 V = json.load(open(R / "revision/summary_revision.json")); C = V["components"]
 V2 = json.load(open(R / "revision/summary_revision2.json"))
+SV = json.load(open(R / "revision/summary_supervisor.json"))
 DS = ["wdbc", "dr_debrecen", "cleveland", "ilpd", "parkinsons", "mammographic", "ctg", "cdc_diabetes"]
 LAB = {"wdbc": "WDBC", "dr_debrecen": "DR Debrecen", "cleveland": "Cleveland", "ilpd": "ILPD", "parkinsons": "Parkinsons",
        "mammographic": "Mammographic", "ctg": "CTG", "cdc_diabetes": "CDC Diabetes"}
 mn = lambda x, n=3: (f"{x:+.{n}f}".replace("-", "$-$")) if x == x else "--"
 fp = lambda p: "$<$0.001" if p < 0.001 else f"{p:.3f}"
 pe = lambda p: "$p<0.001$" if p < 0.001 else f"$p={p:.3f}$"
+c3s = lambda lo, hi: f"[{lo:.3f}, {hi:.3f}]".replace("-", "$-$")
 c4 = lambda lo, hi: f"[{lo:.4f}, {hi:.4f}]".replace("-", "$-$")
 c2 = lambda lo, hi: f"[{lo:.2f}, {hi:.2f}]".replace("-", "$-$")
 L = []
@@ -108,6 +110,35 @@ for t, tl in [("L", "Linear"), ("N", "Non-linear")]:
         a, b = S[(t, rho, "marg")], S[(t, rho, "knn")]
         A(f"{tl} & {rho} & {mn(Au[(t, rho)])} & {mn(a['mean_dndf'])} {c2(a['ci_low'], a['ci_high'])} & {mn(b['mean_dndf'])} {c2(b['ci_low'], b['ci_high'])}\\\\")
 A(r"\bottomrule\end{tabular}")
-A(r"\section*{S10. Protocol log and status of analyses}Confirmatory: H1 and H2 per dataset (primary, replication and large-sample protocols) and the remedy reduction $R$ on held-out repetitions. Exploratory: KernelSHAP and faithfulness correlation (S7), remedy discovery. Post hoc, added after the primary results in response to internal review: HKSJ and prediction intervals and leave-one-out (S3), component analyses, standard ensembles, TreeSHAP and Monte-Carlo checks (S4--S5), tuned results by comparator type (S6), exclusion summaries, similar-gap restriction and gap-threshold sensitivity (S2). All protocols, amendments, deviations and failed predictions are in \texttt{docs/} of the code repository with dates; post hoc additions are labeled there as such.")
+A(r"\section*{S10. Protocol log and status of analyses}Confirmatory: H1 and H2 per dataset (primary, replication and large-sample protocols) and the remedy reduction $R$ on held-out repetitions. Exploratory: KernelSHAP and faithfulness correlation (S7), remedy discovery. Post hoc, added after the primary results in response to internal review: HKSJ and prediction intervals and leave-one-out (S3), component analyses, standard ensembles, TreeSHAP and Monte-Carlo checks (S4--S5), tuned results by comparator type (S6), exclusion summaries, similar-gap restriction and gap-threshold sensitivity (S2), the formal AUC equivalence test (TOST with the pre-specified margin) and the exclusion-free ADF analysis (S12, added after supervisor review on 24 Nov 2026). The remedy table (S11) and the robustness table (S13) were moved here from the paper to respect the page limit. All protocols, amendments, deviations and failed predictions are in \texttt{docs/} of the code repository with dates; post hoc additions are labeled there as such.")
+
+# S11 remedy table (moved from the paper)
+A(r"\section*{S11. Correlation-aware remedy: discovery and pre-specified held-out confirmation}")
+A(r"Attributions are summed within clusters of features with $|\rho_{\text{Spearman}}|\ge0.7$ in the training fold (average linkage), and NDF is computed by deleting whole clusters. Discovery: repetition 1 (exploratory). Confirmation: held-out repetitions 2--5, pre-specified primary outcome $R$ = cluster $-$ feature $\Delta$NDF; placebo = $R$ with correlation clusters minus $R$ with random clusters of the same sizes. $^*p<0.05$.\\[4pt]")
+A(r"\begin{tabular}{lrrrrr}\toprule & Discovery & \multicolumn{4}{c}{Confirmation (pre-specified)}\\\cmidrule(lr){2-2}\cmidrule(lr){3-6} Dataset & Reduction & $\Delta$NDF feature & $\Delta$NDF cluster & Reduction $R$ & Placebo\\\midrule")
+A(open("tab_remedy.tex").read())
+A(r"\bottomrule\end{tabular}")
+# S12 equivalence, exclusions, ADF
+A(r"\section*{S12. AUC equivalence, exclusions and exclusion-free faithfulness (post hoc)}")
+A(r"\textbf{AUC equivalence (TOST, margin $\pm0.02$).} 90\% confidence intervals from the corrected repeated cross-validation variance; equivalence is shown when the interval lies within $\pm0.02$ (TOST $p<0.05$).\\[2pt]")
+A(r"\begin{tabular}{lrrrr}\toprule Dataset & $\Delta$AUC & 90\% CI & TOST $p$ & Equivalent\\\midrule")
+for d in DS:
+    a = SV["auc_tost"][d]; A(f"{LAB[d]} & {mn(a['mean'],4)} & {c4(*a['ci90'])} & {fp(a['p_tost'])} & {'yes' if a['equivalent'] else 'not shown'}\\\\")
+tp = SV["auc_tost_pooled"]
+A(f"\\midrule Pooled & {mn(tp['mean'],4)} & DL {c4(*tp['dl_ci90'])}; HKSJ {c4(*tp['hksj_ci90'])} & {fp(tp['hksj_p_tost'])} (HKSJ) & yes\\\\\\bottomrule\\end{{tabular}}")
+A(r"\\[6pt]\textbf{Exclusions and exclusion-free faithfulness.} ADF $=$ NDF $\times G$ is the prediction drop beyond random deletion in probability units; it needs no gap threshold and is defined whenever $G>0$ (NDF undefined: $G\le0$ or no positive attribution).\\[2pt]")
+A(r"\begin{tabular}{lrrrrrrr}\toprule Dataset & Sampled & $G{<}0.05$ HE & $G{<}0.05$ S* & Included & NDF undefined & $\Delta$ADF (marginal) & $p$\\\midrule")
+AD = SV["adf_all_patients"]
+for d in DS:
+    e = SV["exclusions"][d]; b = AD["marg"]["per_dataset"][d]
+    A(f"{LAB[d]} & {e['sampled']} & {e['excl_he']} & {e['excl_s']} & {e['included']} & {AD['undefined_by_dataset'][d]} & {mn(b['mean_diff'])} & {fp(b['p'])}\\\\")
+pm, pk = AD["marg"], AD["knn"]
+A(f"\\midrule Pooled & {AD['n_sampled']} & & & & {AD['n_sampled']-AD['n_defined']} & {mn(pm['pooled']['pooled'])} & DL {fp(pm['pooled']['p'])}\\\\\\bottomrule\\end{{tabular}}")
+A(f"\\\\[2pt]Pooled $\\Delta$ADF, marginal: DL 95\\% CI {c2(pm['pooled']['ci_low'], pm['pooled']['ci_high'])}, HKSJ {c3s(*pm['hksj_ci'])}; conditional: {mn(pk['pooled']['pooled'])}, DL {c2(pk['pooled']['ci_low'], pk['pooled']['ci_high'])}, HKSJ {c3s(*pk['hksj_ci'])}. Median ADF: HE {AD['median_adf_e3']:.3f}, S* {AD['median_adf_s']:.3f}.")
+# S13 robustness table (moved from the paper)
+A(r"\section*{S13. Robustness of the deficit: components, standard ensembles and tuned models (repetition 1)}")
+A(r"\begin{tabular}{lrrrr}\toprule & \multicolumn{2}{c}{Marginal removal} & \multicolumn{2}{c}{Conditional}\\\cmidrule(lr){2-3}\cmidrule(lr){4-5} Comparison & $\Delta$NDF [95\% CI] & $p$ & $\Delta$NDF & $p$\\\midrule")
+A(open("tab_robust.tex").read())
+A(r"\bottomrule\end{tabular}\\[2pt] SV, ST: soft-voting and stacking ensembles of all five components. Comparison rows: DerSimonian--Laird over datasets. Tuned rows: fold means with a dataset random intercept.")
 A(r"\end{document}")
 Path("supplement.tex").write_text("\n".join(L)); print("supplement.tex written")

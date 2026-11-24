@@ -39,10 +39,11 @@ scripts/                  numbered pipeline (see table below)
 tests/                    pytest suite: NDF known-answer tests, SHAP checks, leakage, statistics
 notebooks/                walkthrough.ipynb (one fold end to end); results_overview.ipynb
 data/raw/                 put the downloaded zips here (see data/raw/README.md)
-data/processed.zip        processed CSVs, saved outer folds, subject groups, CDC sample row indices (unzip in place: `unzip data/processed.zip`)
-results/                  summary JSONs/CSVs/figures for every study; raw per-fold JSON outputs in results/raw_outputs.zip (unzip in place: `unzip results/raw_outputs.zip`); run logs in results/run_logs.zip
+data/processed/           processed CSVs, saved outer folds, subject groups, CDC sample row indices
+results/                  raw per-fold JSON outputs and summary JSONs/CSVs/figures for every study
 docs/                     dated protocols, deviation logs, statistical audit
 paper/                    LaTeX source + supplement; build.sh regenerates figures, every number and the supplement from results/
+logs/                     run logs
 ```
 
 ## Studies and scripts
@@ -59,6 +60,7 @@ paper/                    LaTeX source + supplement; build.sh regenerates figure
 | 6 – Held-out confirmation of the remedy, placebo, mechanism | `PROTOCOL_STUDY2_STUDY3.md` | `11_study6_confirm_remedy.py`, `13_analyse_study6_7.py` | `results/study6/`, `results/study6_7/` |
 | 7 – Tuned components | `PROTOCOL_STUDY2_STUDY3.md` | `12_study7_tuned.py`, `13_analyse_study6_7.py` | `results/study7/`, `results/study6_7/` |
 | Revision round 2 – gap-threshold sensitivity, tuned results with dataset random intercept, deletion shares | `PROTOCOL_STUDY2_STUDY3.md` (Revision round 2) | `16_revision2_stats.py` | `results/revision/` |
+| Supervisor review – AUC equivalence (TOST), exclusion-free ADF, exclusion table | `PROTOCOL_STUDY2_STUDY3.md` (Supervisor review) | `17_supervisor_revision.py` | `results/revision/summary_supervisor.json` |
 | Revision – component NDF, HE vs RF/XGB, SV/ST, TreeSHAP, Monte-Carlo error, HKSJ/prediction intervals, exclusions | `PROTOCOL_STUDY2_STUDY3.md` (Revision analyses) | `14_component_faithfulness.py`, `15_revision_stats.py` | `results/components/`, `results/revision/` |
 
 ## Reproducing
@@ -67,7 +69,6 @@ paper/                    LaTeX source + supplement; build.sh regenerates figure
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt          # exact versions: requirements.lock (Python 3.13)
 pytest -q                                # 25 tests
-unzip data/processed.zip && unzip results/audit.zip   # processed data, saved folds, dataset audit
 
 # 1) download the raw zips into data/raw/ (data/raw/README.md); fingerprints are checked
 python scripts/01_verify_data.py && python scripts/02_prepare_data_and_folds.py
@@ -81,13 +82,13 @@ python scripts/06_simulation.py                                                 
 python scripts/09_study4_remedy_metrics.py && python scripts/11_study6_confirm_remedy.py && python scripts/12_study7_tuned.py
 python scripts/14_component_faithfulness.py
 
-# 3) analyses and paper (if you did not re-run step 2, first: unzip results/raw_outputs.zip)
+# 3) analyses and paper
 python scripts/05_analyse.py && python scripts/08_analyse_study2_3.py
 python scripts/10_analyse_study4.py && python scripts/13_analyse_study6_7.py && python scripts/15_revision_stats.py
 bash paper/build.sh
 ```
 
-**Processed data and folds.** These are included (data/processed.zip; dataset audit in results/audit.zip), so the analyses and the paper can be regenerated from `results/` without re-running the experiments. Re-running everything takes roughly 15–20 hours on two CPU cores.
+**Processed data and folds.** These are included, so the analyses and the paper can be regenerated from `results/` without re-running the experiments. Re-running everything takes roughly 15–20 hours on two CPU cores.
 
 **Reproducibility.** Random seeds are fixed in `configs/study.yaml` and in the scripts. Results were produced on Linux with the pinned versions. A different BLAS or library version can change the last digits.
 
