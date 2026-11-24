@@ -8,7 +8,7 @@ Code, dated protocols, cross-validation folds and per-fold results for the paper
 [README](xai-hybrid-ensemble-faithfulness/README.md), which maps every study in the paper to its protocol, script and results.
 
 Quick links:
-- [Paper PDF](xai-hybrid-ensemble-faithfulness/paper/paper.pdf) and [supplement](xai-hybrid-ensemble-faithfulness/paper/supplement.pdf)
+- [Supplementary material (S1-S13)](xai-hybrid-ensemble-faithfulness/IEEE_supplement_final.pdf)
 - [Protocols and deviation logs](xai-hybrid-ensemble-faithfulness/docs/)
 - [Results overview notebook](xai-hybrid-ensemble-faithfulness/notebooks/results_overview.ipynb)
 - [Scripts](xai-hybrid-ensemble-faithfulness/scripts/) and [library](xai-hybrid-ensemble-faithfulness/src/xhe/)
